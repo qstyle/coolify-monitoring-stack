@@ -25,18 +25,26 @@
 
 ## 🚀 Быстрый старт
 
-### 1. Клонирование и запуск
+### 1. Локальное развертывание
 ```bash
 git clone <your-repo>
 cd coolify-monitoring-stack
 docker-compose up -d
 ```
 
-### 2. Доступ к сервисам
+### 2. Развертывание в Coolify
+```bash
+# Используйте специальный файл для Coolify
+docker-compose -f docker-compose.coolify.yml up -d
+```
+
+**⚠️ Важно:** В Coolify используйте `docker-compose.coolify.yml` для избежания конфликтов портов!
+
+### 3. Доступ к сервисам
 - **Grafana:** http://localhost:3111 (admin/admin123)
 - **Prometheus:** http://localhost:9090
 - **Loki:** http://localhost:3100
-- **cAdvisor:** http://localhost:8080
+- **cAdvisor:** http://localhost:8080 (локально) / http://localhost:8081 (Coolify)
 
 ### 3. Первый вход в Grafana
 1. Откройте http://localhost:3000
