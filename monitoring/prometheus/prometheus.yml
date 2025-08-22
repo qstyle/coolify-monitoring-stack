@@ -1,0 +1,48 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus сам себя
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter - метрики сервера
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # cAdvisor - метрики Docker контейнеров
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Coolify сервисы (добавьте IP ваших серверов)
+  - job_name: 'coolify-servers'
+    static_configs:
+      - targets: 
+        # - '192.168.1.10:9100'  # Сервер 1
+        # - '192.168.1.11:9100'  # Сервер 2
+        # - '192.168.1.12:9100'  # Сервер 3
+        - 'localhost:9100'       # Локальный сервер
+
+  # NestJS приложения (добавьте IP ваших приложений)
+  - job_name: 'nestjs-apps'
+    static_configs:
+      - targets:
+        # - '192.168.1.20:3000'  # NestJS App 1
+        # - '192.168.1.21:3000'  # NestJS App 2
+        # - '192.168.1.22:3000'  # NestJS App 3
+        - 'localhost:3000'       # Локальное приложение
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Docker контейнеры (автоматическое обнаружение)
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['localhost:9323']
