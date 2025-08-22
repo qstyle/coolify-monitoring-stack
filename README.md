@@ -25,26 +25,26 @@
 
 ## 🚀 Быстрый старт
 
-### 1. Локальное развертывание
+### 1. Развертывание в Coolify (по умолчанию)
 ```bash
 git clone <your-repo>
 cd coolify-monitoring-stack
 docker-compose up -d
 ```
 
-### 2. Развертывание в Coolify
-```bash
-# Используйте специальный файл для Coolify
-docker-compose -f docker-compose.coolify.yml up -d
-```
+**✅ Готово для Coolify:** Основной файл уже настроен для развертывания в Coolify!
 
-**⚠️ Важно:** В Coolify используйте `docker-compose.coolify.yml` для избежания конфликтов портов!
+### 2. Локальное развертывание
+```bash
+# Для локального использования используйте специальный файл
+docker-compose -f docker-compose.local.yml up -d
+```
 
 ### 3. Доступ к сервисам
 - **Grafana:** http://localhost:3111 (admin/admin123)
 - **Prometheus:** http://localhost:9090
 - **Loki:** http://localhost:3100
-- **cAdvisor:** http://localhost:8080 (локально) / http://localhost:8081 (Coolify)
+- **cAdvisor:** http://localhost:8081 (Coolify) / http://localhost:8080 (локально)
 
 ### 3. Первый вход в Grafana
 1. Откройте http://localhost:3000
