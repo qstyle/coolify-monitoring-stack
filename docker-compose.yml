@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    user: "0"
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/tmp/loki
+      - ./config/loki-config.yaml:/etc/loki/local-config.yaml
+    networks:
+      - logging
+    restart: unless-stopped
+    environment:
+      - LOKI_CONFIG_EXPAND_ENV=true
+
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    container_name: fluent-bit
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+      - ./config/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+    command: ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit.conf"]
+    networks:
+      - logging
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  # Простой веб-интерфейс для просмотра логов
+  logcli:
+    image: grafana/logcli:latest
+    container_name: logcli
+    environment:
+      - LOKI_ADDR=http://loki:3100
+    networks:
+      - logging
+    depends_on:
+      - loki
+    restart: unless-stopped
+    entrypoint: ["tail", "-f", "/dev/null"]
+
+volumes:
+  loki-data:
+
+networks:
+  logging:
+    driver: bridge
