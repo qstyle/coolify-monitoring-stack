@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # Grafana - веб-интерфейс для дашбордов
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-monitoring
+    restart: unless-stopped
+    ports:
+      - "3111:3000"  # Порт для Coolify (избегаем конфликтов)
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-worldmap-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - monitoring
+    labels:
+      - "coolify.managed=true"
+
+  # Prometheus - сбор и хранение метрик
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-monitoring
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - prometheus_data:/prometheus
+      - ./monitoring/prometheus:/etc/prometheus
+    networks:
+      - monitoring
+    labels:
+      - "coolify.managed=true"
+
+  # Loki - агрегация и хранение логов
+  loki:
+    image: grafana/loki:latest
+    container_name: loki-monitoring
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command:
+      - '-config.file=/etc/loki/local-config.yaml'
+      - '-config.expand-env=true'
+    environment:
+      - LOKI_AUTH_ENABLED=false
+    volumes:
+      - loki_data:/loki
+      - ./monitoring/loki:/etc/loki
+    networks:
+      - monitoring
+    labels:
+      - "coolify.managed=true"
+
+  # Promtail - сбор логов
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail-monitoring
+    restart: unless-stopped
+    command:
+      - '-config.file=/etc/promtail/config.yml'
+      - '-config.expand-env=true'
+    volumes:
+      - /var/log:/var/log
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./monitoring/promtail:/etc/promtail
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+    labels:
+      - "coolify.managed=true"
+
+  # Node Exporter - метрики сервера
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter-monitoring
+    restart: unless-stopped
+    command:
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.udev.data=/host/run/udev/data'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - monitoring
+    labels:
+      - "coolify.managed=true"
+
+  # cAdvisor - метрики Docker контейнеров
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor-monitoring
+    restart: unless-stopped
+    ports:
+      - "8081:8080"  # Изменен порт для избежания конфликтов с Coolify
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring
+    labels:
+      - "coolify.managed=true"
+
+volumes:
+  grafana_data:
+  prometheus_data:
+  loki_data:
+
+networks:
+  monitoring:
+    driver: bridge

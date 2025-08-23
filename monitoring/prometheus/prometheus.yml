@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus сам себя
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter - метрики сервера
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # cAdvisor - метрики Docker контейнеров
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Coolify сервисы (если доступны)
+  - job_name: 'coolify-apps'
+    static_configs:
+      - targets: ['localhost:3000']  # Coolify dashboard
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # Docker контейнеры через cAdvisor
+  - job_name: 'docker-containers'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Системные метрики
+  - job_name: 'system-metrics'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 10s

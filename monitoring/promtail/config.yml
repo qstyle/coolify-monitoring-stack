@@ -1,0 +1,64 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Системные логи
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/*log
+
+  # Docker контейнеры
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          __path__: /var/lib/docker/containers/*/*log
+
+  # Coolify логи
+  - job_name: coolify
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: coolify
+          __path__: /var/log/coolify/*log
+
+  # Nginx логи (если есть)
+  - job_name: nginx
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          __path__: /var/log/nginx/*log
+
+  # Системные сервисы
+  - job_name: systemd
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: systemd
+          __path__: /var/log/syslog
+
+  # Docker daemon логи
+  - job_name: docker-daemon
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker-daemon
+          __path__: /var/log/docker.log
